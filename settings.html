@@ -47,8 +47,11 @@
                         <img id="previewLogo" src="assets/logo.jpg" alt="Logo Preview" class="logo mx-auto mb-3" style="max-width: 150px;">
                         <h2 class="glow-text custom-web-title" style="font-size: 2rem;">Admin Settings</h2>
                         <p class="text-white-50">Changes apply to all devices instantly.</p>
-                        <!-- Delete All Option -->
-                        <button id="clearChatBtn" class="btn btn-outline-danger btn-sm mt-2">🗑️ Clear All Messages Now!</button>
+                        
+                        <div class="d-flex justify-content-center gap-3 mt-2">
+                            <button type="button" id="exportBtn" class="btn btn-outline-info btn-sm">💾 Export JSON Data</button>
+                            <button type="button" id="clearChatBtn" class="btn btn-outline-danger btn-sm">🗑️ Clear All Messages Now!</button>
+                        </div>
                     </div>
 
                     <form id="settingsForm">

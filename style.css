@@ -398,7 +398,7 @@ body::before {
 ================================ */
 .sponsor-banner {
     width: 100%;
-    overflow: hidden;
+    /* overflow: hidden; */
     border-radius: 12px;
     backdrop-filter: blur(5px);
 }
@@ -408,11 +408,13 @@ body::before {
     align-items: center;
     gap: 40px;
     white-space: nowrap;
+    width: max-content;
     animation: sponsorMarquee 15s linear infinite;
 }
     
 .sponsor-logo {
-    height: 60px;
+    height: 80px;
+    flex-shrink: 0;
     object-fit: contain;
     filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
 }

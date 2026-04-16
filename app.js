@@ -143,20 +143,6 @@ const firebaseConfig = {
               setTimeout(() => { if(card) card.classList.remove('highlight'); }, 3000);
           });
       }
-  
-      if (exportBtn) {
-          exportBtn.addEventListener('click', () => {
-              const dataStr = JSON.stringify(allMessages, null, 2);
-              const blob = new Blob([dataStr], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = 'dj_chat_export.json';
-              a.click();
-              URL.revokeObjectURL(url);
-          });
-      }
   }
   
   // ==========================================
@@ -386,7 +372,7 @@ const firebaseConfig = {
   if (loginBtn) {
       loginBtn.addEventListener('click', () => {
           const pwd = document.getElementById('adminPassword').value;
-          if (pwd === "vows2026") {
+          if (pwd === "VOWS2026" || pwd === "vows2026") {
               document.getElementById('loginGate').style.display = 'none';
               document.getElementById('adminPanel').style.display = 'flex';
           } else {
@@ -403,6 +389,28 @@ const firebaseConfig = {
               reactionsRef.remove();
               alert("All data cleared successfully.");
           }
+      });
+  }
+  
+  const exportDataBtn = document.getElementById('exportBtn');
+  if (exportDataBtn) {
+      exportDataBtn.addEventListener('click', () => {
+          messagesRef.once('value', snapshot => {
+              const data = snapshot.val();
+              if (!data) {
+                  alert("No data available to export.");
+                  return;
+              }
+              const msgs = Object.values(data);
+              const dataStr = JSON.stringify(msgs, null, 2);
+              const blob = new Blob([dataStr], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'vows_data_export.json';
+              a.click();
+              URL.revokeObjectURL(url);
+          });
       });
   }
   

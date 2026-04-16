@@ -386,7 +386,7 @@ const firebaseConfig = {
   if (loginBtn) {
       loginBtn.addEventListener('click', () => {
           const pwd = document.getElementById('adminPassword').value;
-          if (pwd === "VOWS2026") {
+          if (pwd === "vows2026") {
               document.getElementById('loginGate').style.display = 'none';
               document.getElementById('adminPanel').style.display = 'flex';
           } else {

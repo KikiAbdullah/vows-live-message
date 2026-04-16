@@ -19,6 +19,22 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 const messagesRef = db.ref('messages');
 
+let globalInterval = 3; // Default interval in seconds
+
+// ==========================================
+// LOGIC FOR LOGO NAVIGATION
+// ==========================================
+// Clicking logo goes to settings.html
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.logo').forEach(img => {
+        img.addEventListener('click', () => {
+            if (!window.location.pathname.endsWith('settings.html')) {
+                window.location.href = 'settings.html';
+            }
+        });
+    });
+});
+
 // ==========================================
 // LOGIC FOR DISPLAY SCREEN (index.html)
 // ==========================================
@@ -50,7 +66,7 @@ if (chatContainer) {
         }
     });
 
-    async function processDisplayQueue() {
+    function processDisplayQueue() {
         if (messageDisplayQueue.length === 0) {
             isProcessingQueue = false;
             return;
@@ -66,12 +82,12 @@ if (chatContainer) {
         chatContainer.scrollTop = chatContainer.scrollHeight;
 
         // Pacing logic: 
-        // If it's a "live" message (sent after page load or very recently), wait 2 seconds.
+        // If it's a "live" message (sent after page load or very recently), wait based on globalInterval.
         // If it's an old/historical message, we can show it faster (e.g. 50ms) to populate the screen.
         const msgAge = Date.now() - msg.timestamp;
         const isLive = msgAge < (Date.now() - sessionStartTime + 5000); // within last 5s since session start
         
-        const waitTime = isLive ? 3000 : 50; 
+        const waitTime = isLive ? (globalInterval * 1000) : 50; 
         
         setTimeout(processDisplayQueue, waitTime);
     }
@@ -119,7 +135,7 @@ if (chatContainer) {
 
             // Remove highlight after a few seconds
             setTimeout(() => {
-                card.classList.remove('highlight');
+                if(card) card.classList.remove('highlight');
             }, 3000);
         });
     }
@@ -240,9 +256,178 @@ document.addEventListener("DOMContentLoaded", () => {
             text: inputUrl,
             width: 100,
             height: 100,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
+            colorDark: "#ffffff",
+            colorLight: "#000000",
             correctLevel: QRCode.CorrectLevel.H
         });
     }
 });
+
+// ==========================================
+// LOGIC FOR REALTIME SETTINGS (Global Themes)
+// ==========================================
+const settingsRef = db.ref('settings');
+
+// Helper to parse Hex to RGB
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+const applyColorVar = (hex, prefix) => {
+    if(!hex) return;
+    const rgb = hexToRgb(hex);
+    if(rgb) {
+        document.documentElement.style.setProperty('--' + prefix + '-color', hex);
+        document.documentElement.style.setProperty('--' + prefix + '-r', rgb.r);
+        document.documentElement.style.setProperty('--' + prefix + '-g', rgb.g);
+        document.documentElement.style.setProperty('--' + prefix + '-b', rgb.b);
+    }
+};
+
+// 1. Listen for Setting Changes (Applies to ALL pages)
+settingsRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        // Apply Global Colors
+        applyColorVar(data.primaryColor, 'primary');
+        applyColorVar(data.secondaryColor, 'secondary');
+        applyColorVar(data.bgColor, 'bg');
+        applyColorVar(data.fontColor, 'text');
+
+        // Apply Global Timing Interval
+        if (data.msgInterval) {
+            globalInterval = parseFloat(data.msgInterval);
+        }
+
+        // Apply Web Title
+        if (data.webTitle) {
+            document.title = data.webTitle;
+            document.querySelectorAll('.custom-web-title').forEach(el => {
+                el.textContent = data.webTitle;
+            });
+        }
+        
+        // Update Logos (Global)
+        if (data.logoBase64) {
+            document.querySelectorAll('.logo').forEach(img => {
+                img.src = data.logoBase64;
+            });
+        }
+
+        // Sync Data to Settings Form if we are on settings page
+        if (document.getElementById('settingsForm')) {
+            const safeSetVal = (id, val) => { if(document.getElementById(id) && val) document.getElementById(id).value = val; };
+            safeSetVal('primaryColor', data.primaryColor);
+            safeSetVal('secondaryColor', data.secondaryColor);
+            safeSetVal('bgColor', data.bgColor);
+            safeSetVal('fontColor', data.fontColor);
+            safeSetVal('webTitle', data.webTitle);
+            safeSetVal('msgInterval', data.msgInterval);
+
+            // Update visible hex labels
+            document.querySelectorAll('.form-control-color').forEach(input => {
+                const hexText = input.nextElementSibling;
+                if(hexText && hexText.classList.contains('colorHexText')) {
+                    hexText.textContent = input.value;
+                }
+            });
+        }
+    }
+});
+
+// 2. Logic to Save Data From Settings Page
+const activeSettingsForm = document.getElementById('settingsForm');
+if (activeSettingsForm) {
+    const primaryColorInput = document.getElementById('primaryColor');
+    const secondaryColorInput = document.getElementById('secondaryColor');
+    const bgColorInput = document.getElementById('bgColor');
+    const fontColorInput = document.getElementById('fontColor');
+    const webTitleInput = document.getElementById('webTitle');
+    const msgIntervalInput = document.getElementById('msgInterval');
+    const logoImageInput = document.getElementById('logoImage');
+    
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const settingsAlert = document.getElementById('settingsAlert');
+    const previewLogo = document.getElementById('previewLogo');
+
+    // Update Hex text labels on change
+    document.querySelectorAll('.form-control-color').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const hexText = e.target.nextElementSibling;
+            if(hexText && hexText.classList.contains('colorHexText')) {
+                hexText.textContent = e.target.value;
+            }
+        });
+    });
+
+    // Preview logo locally when selected
+    logoImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewLogo.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    activeSettingsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveSettingsBtn.disabled = true;
+        saveSettingsBtn.textContent = 'SAVING...';
+
+        const file = logoImageInput.files[0];
+
+        // Ensure we capture all fields
+        const updates = {
+            primaryColor: primaryColorInput.value,
+            secondaryColor: secondaryColorInput.value,
+            bgColor: bgColorInput.value,
+            fontColor: fontColorInput.value,
+            webTitle: webTitleInput.value.trim(),
+            msgInterval: parseFloat(msgIntervalInput.value) || 3
+        };
+
+        const pushToDb = (base64) => {
+            if (base64) updates.logoBase64 = base64;
+            
+            settingsRef.update(updates).then(() => {
+                showSettingsAlert('Global Settings Successfully Updated!', 'success');
+                saveSettingsBtn.disabled = false;
+                saveSettingsBtn.textContent = 'SAVE ALL SETTINGS';
+            }).catch(err => {
+                console.error("Firebase update failed:", err);
+                showSettingsAlert('Failed to save settings.', 'error');
+                saveSettingsBtn.disabled = false;
+                saveSettingsBtn.textContent = 'SAVE ALL SETTINGS';
+            });
+        };
+
+        if (file) {
+            if (file.size > 1500000) { // Max 1.5MB constraint
+                showSettingsAlert('Image is too large! Maximum 1.5MB allowed.', 'error');
+                saveSettingsBtn.disabled = false;
+                saveSettingsBtn.textContent = 'SAVE ALL SETTINGS';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => { pushToDb(event.target.result); };
+            reader.readAsDataURL(file);
+        } else {
+            pushToDb(null); // Save without modifying logo if not uploaded
+        }
+    });
+
+    function showSettingsAlert(text, type) {
+        settingsAlert.style.display = 'block';
+        settingsAlert.textContent = text;
+        settingsAlert.className = 'mt-4 py-2 px-3 rounded text-center ' + (type === 'error' ? 'bg-danger text-white' : 'bg-success text-white');
+        setTimeout(() => { settingsAlert.style.display = 'none'; }, 4000);
+    }
+}

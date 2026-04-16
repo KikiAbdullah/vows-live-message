@@ -33,17 +33,9 @@
       <div class="row justify-content-center">
         <div class="col-md-8 left-display">
           <!-- Top Header: Logo + QR -->
-          <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="d-flex justify-content-center align-items-center mb-4">
             <div class="logo-container">
               <img src="assets/logo.png" alt="VOWS" class="logo" />
-            </div>
-
-               <div class="qr-section">
-              <div id="qrcode"></div>
-              <div class="qr-text">
-                <span class="scan-now">SCAN TO CHAT</span>
-                <span class="url-hint">OPEN ON YOUR MOBILE</span>
-              </div>
             </div>
           </div>
 
@@ -52,7 +44,7 @@
 
           <!-- Sponsor Slideshow -->
           <div
-            class="sponsor-banner mt-4"
+            class="sponsor-banner"
             id="sponsorBanner"
             style="display: none"
           >
@@ -62,10 +54,20 @@
           </div>
         </div>
         <div class="col-md-4 right-chat">
-          <h1 class="glow-text display-3 mb-5 custom-web-title">LIVE CHAT</h1>
+          <h1 class="glow-text display-3 custom-web-title">LIVE CHAT</h1>
+           
           <div class="chat-container" id="chatContainer">
             <!-- Messages will be injected here via JavaScript -->
           </div>
+           <div class="qr-section">
+                <a href="input.html" target="_blank" style="text-decoration: none; display: inline-block;">
+                  <div id="qrcode"></div>
+                </a>
+              <div class="qr-text">
+                <span class="scan-now">SCAN TO CHAT</span>
+                <span class="url-hint">OPEN ON YOUR MOBILE</span>
+              </div>
+            </div>
         </div>
       </div>
     </div>

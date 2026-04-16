@@ -30,18 +30,21 @@
                     <div class="emoji-reaction-container d-flex justify-content-center gap-3 mb-4">
                         <button type="button" class="btn btn-outline-light fs-3 emoji-btn" data-emoji="❤️">❤️</button>
                         <button type="button" class="btn btn-outline-light fs-3 emoji-btn" data-emoji="🔥">🔥</button>
-                        <button type="button" class="btn btn-outline-light fs-3 emoji-btn" data-emoji="🙌">🙌</button>
+                        <button type="button" class="btn btn-outline-light fs-3 emoji-btn" data-emoji="💦">💦</button>
                         <button type="button" class="btn btn-outline-light fs-3 emoji-btn" data-emoji="🎉">🎉</button>
                     </div>
 
                     <form id="messageForm">
                         <div class="mb-4 text-start">
-                            <label for="userName" class="form-label text-white-50">Your Name</label>
-                            <input type="text" class="form-control custom-input" id="userName" placeholder="Your Name" required autocomplete="off">
+                            <label for="userName" class="form-label text-white-50">Your Name (Max 20 chars)</label>
+                            <input type="text" class="form-control custom-input" id="userName" placeholder="Your Name" required autocomplete="off" maxlength="20">
                         </div>
                         <div class="mb-4 text-start">
-                            <label for="userMessage" class="form-label text-white-50">Message</label>
-                            <textarea class="form-control custom-textarea" id="userMessage" rows="4" placeholder="Shoutout to the front row..." required autocomplete="off"></textarea>
+                            <label for="userMessage" class="form-label text-white-50 d-flex justify-content-between">
+                                <span>Message</span>
+                                <span id="charCounter" style="font-size: 0.8rem;">0/200</span>
+                            </label>
+                            <textarea class="form-control custom-textarea" id="userMessage" rows="4" placeholder="Shoutout to the front row..." required autocomplete="off" maxlength="200"></textarea>
                         </div>
                         <button type="submit" class="neon-btn w-100 mt-2" id="submitBtn">SEND MESSAGE</button>
                     </form>

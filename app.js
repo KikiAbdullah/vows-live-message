@@ -121,7 +121,6 @@ if (chatContainer) {
     card.innerHTML = `
               <div class="message-header">
                   <span class="user-name">${safeName}</span>
-                  <span class="timestamp">${timeString}</span>
               </div>
               <div class="message-text">
                   ${safeMsg}
@@ -135,10 +134,10 @@ if (chatContainer) {
       const bigCard = document.createElement("div");
       bigCard.className = "big-message-card";
       bigCard.innerHTML = `
-                  <span class="user-name user-name-big">${safeName}</span>
                   <div class="message-text message-text-big">
                       "${safeMsg}"
                   </div>
+                  <span class="user-name user-name-big">From: ${safeName}</span>
               `;
       newChatContainer.appendChild(bigCard);
     }
@@ -169,6 +168,23 @@ const submitBtn = document.getElementById("submitBtn");
 const statusAlert = document.getElementById("statusAlert");
 
 if (messageForm) {
+  // Character counter logic
+  const charCounter = document.getElementById("charCounter");
+  if (charCounter && userMessageInput) {
+    userMessageInput.addEventListener("input", () => {
+      const len = userMessageInput.value.length;
+      charCounter.textContent = `${len}/200`;
+      // Feedback: turn red if reaching limit
+      if (len >= 200) {
+        charCounter.style.color = "var(--primary-color)";
+        charCounter.style.fontWeight = "bold";
+      } else {
+        charCounter.style.color = "rgba(255, 255, 255, 0.5)";
+        charCounter.style.fontWeight = "normal";
+      }
+    });
+  }
+
   messageForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -385,18 +401,25 @@ settingsRef.on("value", (snapshot) => {
     if (sponsorsToRender.length > 0) {
       sponsorBanner.style.display = "block";
       sponsorTrack.innerHTML = "";
-      // Duplicate once to make marquee look seamless
-      const fullList = [
-        ...sponsorsToRender,
-        ...sponsorsToRender,
-        ...sponsorsToRender,
-      ];
-      fullList.forEach((src) => {
-        const img = document.createElement("img");
-        img.src = src;
-        img.className = "sponsor-logo";
-        sponsorTrack.appendChild(img);
-      });
+      
+      // Function to make a full set of logos
+      const createContent = () => {
+        const div = document.createElement("div");
+        div.className = "sponsor-content";
+        sponsorsToRender.forEach((src) => {
+          const img = document.createElement("img");
+          img.src = src;
+          img.className = "sponsor-logo";
+          div.appendChild(img);
+        });
+        return div;
+      }
+
+      // Add 4 sets to guarantee it wraps around seamlessly on ultra-wide screens
+      sponsorTrack.appendChild(createContent());
+      sponsorTrack.appendChild(createContent());
+      sponsorTrack.appendChild(createContent());
+      sponsorTrack.appendChild(createContent());
     } else {
       sponsorBanner.style.display = "none";
     }

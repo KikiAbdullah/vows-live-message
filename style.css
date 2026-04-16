@@ -79,7 +79,7 @@ body::before {
 
 /* Message Board Container */
 .chat-container {
-    height: calc(100vh - 180px);
+    height: calc(100vh - 380px);
     overflow-y: auto;
     padding-right: 15px;
     scrollbar-width: thin;
@@ -109,8 +109,8 @@ body::before {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 15px;
+    margin-bottom: 10px;
     opacity: 0;
     transform: translateY(30px);
     transition: all 0.5s ease;
@@ -134,19 +134,19 @@ body::before {
 }
 
 .user-name {
-    font-size: 1.1rem;
+    font-size: 12pt;
     font-weight: 700;
     color: var(--primary-color);
     text-shadow: 0 0 10px rgba(var(--primary-r), var(--primary-g), var(--primary-b), 0.5);
 }
 
 .timestamp {
-    font-size: 0.8rem;
+    font-size: 12pt;
     color: rgba(var(--text-r), var(--text-g), var(--text-b), 0.5);
 }
 
 .message-text {
-    font-size: 1.25rem;
+    font-size: 15pt;
     line-height: 1.5;
     color: var(--text-color);
     word-break: break-word;
@@ -263,8 +263,8 @@ body::before {
 }
 
 .logo {
-    max-width: 250px;
-    max-height: 180px;
+    max-width: 450px;
+    max-height: 200px;
     object-fit: contain;
     display: block;
     border-radius: 8px;
@@ -287,6 +287,7 @@ body::before {
 }
 
 .qr-section {
+    margin-top: 5px;
     display: flex;
     align-items: center;
     gap: 20px;
@@ -306,14 +307,16 @@ body::before {
 
 #qrcode {
     cursor: pointer;
-    transition: transform 0.3s ease;
-    transform-origin: top right;
+    transition: transform 0.4s ease;
+    /* Scale towards the right column (chat-container) and down */
+    transform-origin: top left;
     position: relative;
+    z-index: 100;
 }
 
 #qrcode:hover {
-    transform: scale(1.2);
-    z-index: -1000;
+    transform: scale(1.2); /* Sangat membesar */
+    z-index: 9999;
 }
 
 #qrcode img, #qrcode canvas {
@@ -346,7 +349,7 @@ body::before {
     -webkit-backdrop-filter: blur(25px);
     border: 2px solid var(--primary-color);
     border-radius: 24px;
-    padding: 3rem;
+    padding: 2rem;
     box-shadow: 0 0 40px rgba(var(--primary-r), var(--primary-g), var(--primary-b), 0.2), inset 0 0 20px rgba(var(--primary-r), var(--primary-g), var(--primary-b), 0.1);
     animation: bigGlowPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -357,18 +360,27 @@ body::before {
 }
 
 .user-name-big {
-    font-size: 2.2rem;
+    font-size: 2rem;
     margin-bottom: 0.5rem;
     display: block;
     color: var(--primary-color);
 }
 
 .message-text-big {
-    font-size: 3.5rem;
+    font-size: 3rem;
     font-weight: 800;
     line-height: 1.2;
     color: var(--text-color);
     text-shadow: 0 0 15px rgba(var(--text-r), var(--text-g), var(--text-b), 0.3);
+    
+    /* Truncation / Clamping logic */
+    display: -webkit-box;
+    line-clamp: 6;
+    -webkit-line-clamp: 6; /* Maksimal 4 baris agar tidak memenuhi layar */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word; /* Mencegah kata panjang merusak layout */
 }
 
 /* ================================
@@ -411,29 +423,39 @@ body::before {
 ================================ */
 .sponsor-banner {
     width: 100%;
-    /* overflow: hidden; */
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
+    overflow: hidden;
+    border-radius: 16px;
 }
 
 .sponsor-track {
     display: flex;
-    align-items: center;
-    gap: 80px;
     white-space: nowrap;
     width: max-content;
-    animation: sponsorMarquee 35s linear infinite;
+    align-items: center;
+}
+
+.sponsor-content {
+    display: flex;
+    align-items: center;
+    gap: 100px;
+    padding-right: 100px; /* Match gap for seamless loop */
+    animation: sponsorMarquee 25s linear infinite;
     will-change: transform;
 }
     
 .sponsor-logo {
-    height: 80px;
+    height: 100px; /* Diperbesar sesuai request sebelumnya */
     flex-shrink: 0;
     object-fit: contain;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.15)) grayscale(20%);
+    transition: filter 0.3s ease;
+}
+
+.sponsor-logo:hover {
+    filter: drop-shadow(0 0 12px rgba(var(--primary-r), var(--primary-g), var(--primary-b), 0.6)) grayscale(0%);
 }
 
 @keyframes sponsorMarquee {
-    0% { transform: translateX(100%); }
+    0% { transform: translateX(0); }
     100% { transform: translateX(-100%); }
 }

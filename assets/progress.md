@@ -25,7 +25,14 @@ Website **"VOWS"** adalah sebuah platform *Realtime Live Message Board* yang dir
 - **Dual Display:**
     - Kolom Kiri: Menampilkan 1 pesan terbaru dalam ukuran sangat besar (fokus utama).
     - Kolom Kanan: Daftar chat history yang masuk.
-- **Sponsor Marquee:** Banner berjalan di bagian bawah yang menampilkan logo-logo sponsor secara dinamis.
+- **Premium Sponsor Marquee:** Banner berjalan secara *seamless* (tanpa terputus) di bagian bawah. 
+    - Ukuran logo lebih besar (**100px**).
+    - Efek *glassmorphism* dengan glow dan bayangan agar terlihat premium.
+    - Animasi *Infinite Loop* menggunakan 4 set replikasi logo.
+- **Text & Layout Stability:** 
+    - Pembatasan karakter input (Nama: 20, Pesan: 200).
+    - *Live Character Counter* di halaman input (0/200).
+    - Fitur *Auto-Truncate* (clamping) di layar utama untuk mencegah teks panjang merusak tampilan.
 - **Export Data:** Tombol untuk mengunduh seluruh riwayat chat ke file `.json`.
 
 ### 3. Kemampuan Kustomisasi (CMS)

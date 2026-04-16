@@ -25,14 +25,30 @@
     </div>
 
     <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-10 col-lg-8">
-                <!-- Settings Container -->
+        
+        <!-- LOGIN GATE -->
+        <div id="loginGate" class="row justify-content-center pt-5">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="glass-form-container text-center">
+                    <img src="assets/logo.jpg" class="logo mx-auto mb-3" style="max-width: 150px;">
+                    <h3 class="text-white mb-4">Admin Sign In</h3>
+                    <input type="password" id="adminPassword" class="form-control custom-input mb-3 text-center" placeholder="Enter Password">
+                    <button id="loginBtn" class="neon-btn w-100">ENTER</button>
+                    <div id="loginError" class="mt-3 text-danger font-weight-bold" style="display:none;">Incorrect Password!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN PANEL -->
+        <div id="adminPanel" class="row justify-content-center" style="display: none;">
+            <div class="col-12 col-lg-10">
                 <div class="glass-form-container">
                     <div class="text-center mb-5">
                         <img id="previewLogo" src="assets/logo.jpg" alt="Logo Preview" class="logo mx-auto mb-3" style="max-width: 150px;">
                         <h2 class="glow-text custom-web-title" style="font-size: 2rem;">Admin Settings</h2>
                         <p class="text-white-50">Changes apply to all devices instantly.</p>
+                        <!-- Delete All Option -->
+                        <button id="clearChatBtn" class="btn btn-outline-danger btn-sm mt-2">🗑️ Clear All Messages Now!</button>
                     </div>
 
                     <form id="settingsForm">
@@ -50,7 +66,7 @@
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label class="form-label text-white-50 font-weight-bold">Secondary Theme Color (Gradients)</label>
+                                    <label class="form-label text-white-50 font-weight-bold">Secondary Theme Color</label>
                                     <div class="d-flex align-items-center gap-3">
                                         <input type="color" class="form-control form-control-color bg-transparent border-0 p-1" id="secondaryColor" value="#4a0000">
                                         <span class="text-white colorHexText">#4a0000</span>
@@ -72,11 +88,20 @@
                                         <span class="text-white colorHexText">#ffffff</span>
                                     </div>
                                 </div>
+
+                                <hr class="border-secondary">
+
+                                <h5 class="text-white mb-3 mt-4">🛡️ Moderation</h5>
+                                <div class="mb-4">
+                                    <label for="profanityList" class="form-label text-white-50 font-weight-bold">Profanity Filter Words</label>
+                                    <textarea class="form-control custom-textarea" id="profanityList" rows="3" placeholder="word1, word2, badword..."></textarea>
+                                    <small class="text-white-50">Separate words with commas. These will be replaced with ***</small>
+                                </div>
                             </div>
                             
-                            <!-- Texts & Timers Column -->
+                            <!-- Texts & Content Column -->
                             <div class="col-md-6 mb-4">
-                                <h5 class="text-white mb-3">⚙️ Preferences</h5>
+                                <h5 class="text-white mb-3">⚙️ Content & Features</h5>
 
                                 <div class="mb-4">
                                     <label for="webTitle" class="form-label text-white-50 font-weight-bold">Web Title</label>
@@ -84,14 +109,30 @@
                                 </div>
 
                                 <div class="mb-4">
-                                    <label for="msgInterval" class="form-label text-white-50 font-weight-bold">Message Interval (Seconds)</label>
+                                    <label for="msgInterval" class="form-label text-white-50 font-weight-bold">Message Interval (Sec)</label>
                                     <input type="number" class="form-control custom-input" id="msgInterval" min="0.5" max="10" step="0.5" value="3" placeholder="3">
-                                    <small class="text-white-50">Time gap between new messages popping up.</small>
                                 </div>
 
                                 <div class="mb-4">
-                                    <label for="logoImage" class="form-label text-white-50 font-weight-bold">Upload Logo (Max 1MB)</label>
+                                    <label for="logoImage" class="form-label text-white-50 font-weight-bold">Upload Main Logo (Max 1MB)</label>
                                     <input class="form-control custom-input" type="file" id="logoImage" accept="image/png, image/jpeg, image/gif">
+                                </div>
+
+                                <hr class="border-secondary">
+
+                                <h5 class="text-white mb-3 mt-4">📺 Sponsor Slideshow (Max 500kb each)</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-white-50">Sponsor Logo 1</label>
+                                    <input class="form-control custom-input sponsor-upload" type="file" id="sponsor1" accept="image/*">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-white-50">Sponsor Logo 2</label>
+                                    <input class="form-control custom-input sponsor-upload" type="file" id="sponsor2" accept="image/*">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-white-50">Sponsor Logo 3</label>
+                                    <input class="form-control custom-input sponsor-upload" type="file" id="sponsor3" accept="image/*">
                                 </div>
                             </div>
                         </div>

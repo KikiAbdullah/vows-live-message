@@ -24,22 +24,29 @@ const settingsRef = db.ref("settings");
 // CONFIGURATION VARIABLES
 // ==========================================
 let globalInterval = 3;
-let profanityWords = []; // Loaded from DB
-const maxDisplayMessages = 10; // Ubah ini untuk menampilkan 10, 20, atau 30 chat terakhir
+let profanityRegexes = []; // Pre-compiled regexes for performance
+const maxDisplayMessages = 10;
+const rootStyle = document.documentElement.style; // Cached for CSS var updates
+let activeFallingEmojis = 0; // Counter instead of querySelectorAll
 
 // ==========================================
-// PROFANITY FILTER
+// PROFANITY FILTER (Pre-compiled Regexes)
 // ==========================================
 function filterProfanity(text) {
-  if (!profanityWords || profanityWords.length === 0) return text;
+  if (profanityRegexes.length === 0) return text;
   let filtered = text;
-  profanityWords.forEach((word) => {
-    if (!word) return;
-    const regex = new RegExp(word, "gi"); // case insensitive
-    const replacer = "*".repeat(word.length);
-    filtered = filtered.replace(regex, replacer);
-  });
+  for (let i = 0; i < profanityRegexes.length; i++) {
+    filtered = filtered.replace(profanityRegexes[i].regex, profanityRegexes[i].mask);
+  }
   return filtered;
+}
+
+function compileProfanityList(csvString) {
+  profanityRegexes = csvString
+    .split(",")
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0)
+    .map((word) => ({ regex: new RegExp(word, "gi"), mask: "*".repeat(word.length) }));
 }
 
 // ==========================================
@@ -143,7 +150,6 @@ if (chatContainer) {
     }
 
     // OPTIMIZATION: DOM Pruning to prevent lagging on old laptops.
-    // Keep only X active DOM nodes in the chat container based on maxDisplayMessages
     if (chatContainer.childElementCount > maxDisplayMessages) {
       chatContainer.removeChild(chatContainer.firstChild);
     }
@@ -273,22 +279,22 @@ if (emojiRainContainer) {
 function createFallingEmoji(emojiChar) {
   if (!emojiRainContainer) return;
 
-  // OPTIMIZATION: Throttle Emojis to max 30 elements on screen at once to prevent GPU crashing
-  if (document.querySelectorAll(".falling-emoji").length > 30) return;
+  // OPTIMIZATION: Use counter instead of querySelectorAll to avoid DOM scan
+  if (activeFallingEmojis > 30) return;
 
+  activeFallingEmojis++;
   const emoji = document.createElement("div");
   emoji.className = "falling-emoji";
-  emoji.innerText = emojiChar;
+  emoji.textContent = emojiChar; // textContent avoids layout reflow vs innerText
 
-  // Randomize layout
   emoji.style.left = Math.random() * 100 + "vw";
-  emoji.style.animationDuration = Math.random() * 2 + 3 + "s"; // 3s - 5s
+  emoji.style.animationDuration = Math.random() * 2 + 3 + "s";
 
   emojiRainContainer.appendChild(emoji);
 
-  // Remove element after animation
   setTimeout(() => {
     emoji.remove();
+    activeFallingEmojis--;
   }, 5000);
 }
 
@@ -350,10 +356,10 @@ const applyColorVar = (hex, prefix) => {
   if (!hex) return;
   const rgb = hexToRgb(hex);
   if (rgb) {
-    document.documentElement.style.setProperty("--" + prefix + "-color", hex);
-    document.documentElement.style.setProperty("--" + prefix + "-r", rgb.r);
-    document.documentElement.style.setProperty("--" + prefix + "-g", rgb.g);
-    document.documentElement.style.setProperty("--" + prefix + "-b", rgb.b);
+    rootStyle.setProperty("--" + prefix + "-color", hex);
+    rootStyle.setProperty("--" + prefix + "-r", rgb.r);
+    rootStyle.setProperty("--" + prefix + "-g", rgb.g);
+    rootStyle.setProperty("--" + prefix + "-b", rgb.b);
   }
 };
 
@@ -381,12 +387,9 @@ settingsRef.on("value", (snapshot) => {
       .forEach((img) => (img.src = data.logoBase64));
   }
 
-  // Profanity array parse
+  // Profanity array parse (pre-compile regexes once)
   if (data.profanityList) {
-    profanityWords = data.profanityList
-      .split(",")
-      .map((w) => w.trim())
-      .filter((w) => w.length > 0);
+    compileProfanityList(data.profanityList);
   }
 
   // Render Sponsor Banner
@@ -402,24 +405,23 @@ settingsRef.on("value", (snapshot) => {
       sponsorBanner.style.display = "block";
       sponsorTrack.innerHTML = "";
       
-      // Function to make a full set of logos
+      // Use DocumentFragment to batch DOM appends (reduces reflows)
+      const fragment = document.createDocumentFragment();
       const createContent = () => {
         const div = document.createElement("div");
         div.className = "sponsor-content";
         sponsorsToRender.forEach((src) => {
           const img = document.createElement("img");
           img.src = src;
+          img.loading = "lazy";
           img.className = "sponsor-logo";
           div.appendChild(img);
         });
         return div;
-      }
+      };
 
-      // Add 4 sets to guarantee it wraps around seamlessly on ultra-wide screens
-      sponsorTrack.appendChild(createContent());
-      sponsorTrack.appendChild(createContent());
-      sponsorTrack.appendChild(createContent());
-      sponsorTrack.appendChild(createContent());
+      for (let i = 0; i < 4; i++) fragment.appendChild(createContent());
+      sponsorTrack.appendChild(fragment);
     } else {
       sponsorBanner.style.display = "none";
     }

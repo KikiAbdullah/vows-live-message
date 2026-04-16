@@ -25,6 +25,9 @@ body {
     padding: 0;
     overflow-x: hidden;
     position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
 }
 
 /* Background animated glow or subtle grid could be added here */
@@ -39,6 +42,7 @@ body::before {
     z-index: -1;
     pointer-events: none;
     animation: pulseGlow 8s infinite alternate;
+    will-change: opacity;
 }
 
 @keyframes pulseGlow {
@@ -57,6 +61,7 @@ body::before {
     left: 0;
     pointer-events: none;
     animation: scanlineMove 6s linear infinite;
+    will-change: bottom;
 }
 
 @keyframes scanlineMove {
@@ -113,7 +118,8 @@ body::before {
     margin-bottom: 10px;
     opacity: 0;
     transform: translateY(30px);
-    transition: all 0.5s ease;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    contain: content;
 }
 
 .message-card.show {
@@ -352,6 +358,7 @@ body::before {
     padding: 2rem;
     box-shadow: 0 0 40px rgba(var(--primary-r), var(--primary-g), var(--primary-b), 0.2), inset 0 0 20px rgba(var(--primary-r), var(--primary-g), var(--primary-b), 0.1);
     animation: bigGlowPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    contain: layout style;
 }
 
 @keyframes bigGlowPop {
@@ -395,6 +402,7 @@ body::before {
     pointer-events: none;
     z-index: 99999;
     overflow: hidden;
+    contain: strict;
 }
 
 .falling-emoji {
@@ -458,4 +466,85 @@ body::before {
 @keyframes sponsorMarquee {
     0% { transform: translateX(0); }
     100% { transform: translateX(-100%); }
+}
+
+/* ================================
+   RESPONSIVE BREAKPOINTS
+================================ */
+@media (max-width: 991.98px) {
+    /* Tablet: stack columns vertically */
+    .left-display {
+        height: auto;
+        min-height: 50vh;
+        padding-bottom: 1rem;
+    }
+    .chat-container {
+        height: 40vh;
+    }
+    .new-chat {
+        padding-right: 0;
+    }
+    .message-text-big {
+        font-size: 2.2rem;
+    }
+    .user-name-big {
+        font-size: 1.5rem;
+    }
+    .logo {
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Mobile: compact everything */
+    .glass-form-container {
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
+    .message-text-big {
+        font-size: 1.6rem;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+    }
+    .user-name-big {
+        font-size: 1.2rem;
+    }
+    .big-message-card {
+        padding: 1.2rem;
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    .message-card {
+        padding: 10px;
+        border-radius: 12px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+    .chat-container {
+        height: calc(100vh - 300px);
+        padding-right: 8px;
+    }
+    .qr-section {
+        padding: 10px 15px;
+        gap: 12px;
+    }
+    .scan-now {
+        font-size: 1rem;
+    }
+    .logo {
+        max-width: 200px;
+        max-height: 120px;
+    }
+    .glow-text {
+        font-size: 1.8rem !important;
+        margin-bottom: 15px;
+    }
+    .sponsor-logo {
+        height: 60px;
+    }
+    .sponsor-content {
+        gap: 50px;
+        padding-right: 50px;
+    }
 }

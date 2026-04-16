@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Send a live message to the VOWS event board">
+    <meta name="theme-color" content="#000000">
     <title>Send Live Message</title>
+
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,12 +26,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
-    <div class="container center-screen">
+    <main class="container center-screen">
         <div class="row w-100 justify-content-center">
             <div class="col-12 col-md-8 col-lg-6">
                 <!-- Form Container -->
                 <div class="glass-form-container text-center">
-                    <img src="assets/logo.png" alt="VOWS" class="logo mx-auto mb-3" style="max-width: 180px;">
+                    <img src="assets/logo.png" alt="VOWS" class="logo mx-auto mb-3" style="max-width: 180px;" loading="eager">
                     <h2 class="glow-text mb-4 custom-web-title" style="font-size: 1.5rem;">Send a Message</h2>
                     
                     <div class="emoji-reaction-container d-flex justify-content-center gap-3 mb-4">
@@ -52,9 +59,9 @@
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- App Logic -->
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
 </body>
 </html>

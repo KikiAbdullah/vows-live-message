@@ -498,6 +498,68 @@ if (exportDataBtn) {
   });
 }
 
+const downloadQrBtn = document.getElementById("downloadQrBtn");
+if (downloadQrBtn) {
+  downloadQrBtn.addEventListener("click", () => {
+    // Build the input.html URL
+    let currentUrl = window.location.href;
+    let baseUrl = currentUrl.split("?")[0].split("#")[0];
+    if (baseUrl.endsWith("settings.html")) {
+      baseUrl = baseUrl.replace("settings.html", "");
+    }
+    if (!baseUrl.endsWith("/")) baseUrl += "/";
+    const inputUrl = baseUrl + "input.html";
+
+    // Check if QRCode library is loaded
+    if (typeof QRCode === "undefined") {
+      // Dynamically load QRCode library
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+      script.onload = () => generateAndDownloadQR(inputUrl);
+      script.onerror = () => alert("Failed to load QR code library.");
+      document.head.appendChild(script);
+    } else {
+      generateAndDownloadQR(inputUrl);
+    }
+  });
+}
+
+function generateAndDownloadQR(url) {
+  // Create off-screen container
+  const tempDiv = document.createElement("div");
+  tempDiv.style.position = "absolute";
+  tempDiv.style.left = "-9999px";
+  document.body.appendChild(tempDiv);
+
+  new QRCode(tempDiv, {
+    text: url,
+    width: 512,
+    height: 512,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+
+  // QRCode generates a canvas — wait for it, then download
+  setTimeout(() => {
+    const canvas = tempDiv.querySelector("canvas");
+    if (canvas) {
+      canvas.toBlob((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = "vows_qrcode.jpg";
+        a.click();
+        URL.revokeObjectURL(blobUrl);
+        tempDiv.remove();
+      }, "image/jpeg", 0.95);
+    } else {
+      alert("QR code generation failed.");
+      tempDiv.remove();
+    }
+  }, 500);
+}
+
 const activeSettingsForm = document.getElementById("settingsForm");
 if (activeSettingsForm) {
   const getFileBase64 = (id) =>

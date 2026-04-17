@@ -55,7 +55,7 @@ function compileProfanityList(csvString) {
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".logo").forEach((img) => {
     img.addEventListener("click", () => {
-      if (!window.location.pathname.endsWith("settings.html")) {
+      if (window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/")) {
         window.location.href = "settings.html";
       }
     });
@@ -446,6 +446,32 @@ settingsRef.on("value", (snapshot) => {
       if (hexText && hexText.classList.contains("colorHexText"))
         hexText.textContent = input.value;
     });
+
+    // Show sponsor previews
+    ["sponsor1", "sponsor2", "sponsor3"].forEach((key) => {
+      const preview = document.getElementById("preview" + key.charAt(0).toUpperCase() + key.slice(1));
+      const deleteBtn = preview ? preview.parentElement.querySelector(".delete-sponsor-btn") : null;
+      if (preview && data[key]) {
+        preview.src = data[key];
+        preview.style.display = "inline-block";
+        if (deleteBtn) deleteBtn.style.display = "inline-block";
+      } else if (preview) {
+        preview.style.display = "none";
+        if (deleteBtn) deleteBtn.style.display = "none";
+      }
+    });
+
+    // Show logo preview thumbnail
+    const logoThumb = document.getElementById("previewLogoThumb");
+    const deleteLogoBtn = document.getElementById("deleteLogoBtn");
+    if (logoThumb && data.logoBase64) {
+      logoThumb.src = data.logoBase64;
+      logoThumb.style.display = "inline-block";
+      if (deleteLogoBtn) deleteLogoBtn.style.display = "inline-block";
+    } else if (logoThumb) {
+      logoThumb.style.display = "none";
+      if (deleteLogoBtn) deleteLogoBtn.style.display = "none";
+    }
   }
 });
 
@@ -641,4 +667,33 @@ if (activeSettingsForm) {
         saveSettingsBtn.textContent = "SAVE ALL SETTINGS";
       });
   });
+
+  // Delete Sponsor Buttons
+  document.querySelectorAll(".delete-sponsor-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sponsorKey = btn.getAttribute("data-sponsor");
+      if (confirm("Remove this sponsor image?")) {
+        settingsRef.child(sponsorKey).remove().then(() => {
+          const preview = document.getElementById("preview" + sponsorKey.charAt(0).toUpperCase() + sponsorKey.slice(1));
+          if (preview) { preview.style.display = "none"; preview.src = ""; }
+          btn.style.display = "none";
+        });
+      }
+    });
+  });
+
+  // Delete Main Logo Button
+  const deleteLogoBtn = document.getElementById("deleteLogoBtn");
+  if (deleteLogoBtn) {
+    deleteLogoBtn.addEventListener("click", () => {
+      if (confirm("Remove the main logo?")) {
+        settingsRef.child("logoBase64").remove().then(() => {
+          const thumb = document.getElementById("previewLogoThumb");
+          if (thumb) { thumb.style.display = "none"; thumb.src = ""; }
+          deleteLogoBtn.style.display = "none";
+          document.getElementById("previewLogo").src = "assets/logo.png";
+        });
+      }
+    });
+  }
 }

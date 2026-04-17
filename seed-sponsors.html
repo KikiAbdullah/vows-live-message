@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Seed Default Sponsors</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>body{background:#111;color:#fff;font-family:sans-serif;padding:40px;text-align:center;}button{padding:12px 24px;font-size:18px;cursor:pointer;background:#0f0;border:none;border-radius:8px;}</style>
+</head>
+<body>
+  <h1>VOWS - Seed Default Sponsors</h1>
+  <p>Click the button below to write default sponsor images to the database.</p>
+  <button id="seedBtn">SEED DEFAULT SPONSORS</button>
+  <p id="status" style="margin-top:20px;"></p>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPVpFq8FL2ySobVvriCvh8iOsYno2PyUo",
+      authDomain: "vows-2e1e0.firebaseapp.com",
+      databaseURL: "https://vows-2e1e0-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "vows-2e1e0",
+      storageBucket: "vows-2e1e0.firebasestorage.app",
+      messagingSenderId: "994508920204",
+      appId: "1:994508920204:web:2cf528228ff0dc91bb32a9",
+      measurementId: "G-2J0ZEYF7QX",
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Load the base64 images from external JS files
+    async function loadAndSeed() {
+      const status = document.getElementById("status");
+      status.textContent = "Loading sponsor images...";
+
+      try {
+        const [res1, res2] = await Promise.all([
+          fetch("assets/default-sponsor1.txt").then(r => r.text()),
+          fetch("assets/default-sponsor2.txt").then(r => r.text()),
+        ]);
+
+        status.textContent = "Writing to database...";
+        await db.ref("settings").update({
+          sponsor1: res1.trim(),
+          sponsor2: res2.trim(),
+        });
+        status.textContent = "✅ Default sponsors seeded successfully! You can close this page.";
+        status.style.color = "#0f0";
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ Failed: " + err.message;
+        status.style.color = "#f00";
+      }
+    }
+
+    document.getElementById("seedBtn").addEventListener("click", loadAndSeed);
+  </script>
+</body>
+</html>

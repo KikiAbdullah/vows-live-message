@@ -30,6 +30,71 @@ const rootStyle = document.documentElement.style; // Cached for CSS var updates
 let activeFallingEmojis = 0; // Counter instead of querySelectorAll
 
 // ==========================================
+// SECURITY: Rate Limiting
+// ==========================================
+let lastSubmitTime = 0;
+const SUBMIT_COOLDOWN_MS = 5000; // 5 second cooldown between messages
+
+// ==========================================
+// SECURITY: Emoji Whitelist
+// ==========================================
+const ALLOWED_EMOJIS = ['❤️', '🔥', '💦', '👑'];
+
+// ==========================================
+// SECURITY UTILITIES
+// ==========================================
+
+/**
+ * Strip all HTML tags and limit string length.
+ * This runs BEFORE data goes into Firebase.
+ */
+function sanitizeInput(str, maxLen) {
+  if (typeof str !== 'string') return '';
+  // Strip HTML tags completely
+  let clean = str.replace(/<[^>]*>/g, '');
+  // Remove null bytes and control characters (except newlines/tabs)
+  clean = clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  // Trim whitespace
+  clean = clean.trim();
+  // Enforce max length
+  if (maxLen && clean.length > maxLen) {
+    clean = clean.substring(0, maxLen);
+  }
+  return clean;
+}
+
+/**
+ * Escape regex special characters to prevent ReDoS / regex crash
+ * in the profanity filter.
+ */
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Validate hex color format strictly.
+ * Returns true only for valid #RRGGBB hex colors.
+ */
+function isValidHexColor(hex) {
+  return /^#[0-9A-Fa-f]{6}$/.test(hex);
+}
+
+/**
+ * SHA-256 hash using Web Crypto API (async).
+ * Used for admin password verification.
+ */
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Pre-computed hash of default password "VOWS2026"
+// SHA-256("VOWS2026") = this value
+const DEFAULT_ADMIN_HASH = 'ff90d53ce4eb0774565a124f70b62cab89a13f056f1180f7e8ba81b5e9133ecf';
+
+// ==========================================
 // PROFANITY FILTER (Pre-compiled Regexes)
 // ==========================================
 function filterProfanity(text) {
@@ -46,7 +111,11 @@ function compileProfanityList(csvString) {
     .split(",")
     .map((w) => w.trim())
     .filter((w) => w.length > 0)
-    .map((word) => ({ regex: new RegExp(word, "gi"), mask: "*".repeat(word.length) }));
+    .map((word) => {
+      // SECURITY: Escape regex special chars to prevent crash/ReDoS
+      const safeWord = escapeRegExp(word);
+      return { regex: new RegExp(safeWord, "gi"), mask: "*".repeat(word.length) };
+    });
 }
 
 // ==========================================
@@ -194,13 +263,23 @@ if (messageForm) {
   messageForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    const name = userNameInput.value.trim();
-    const message = userMessageInput.value.trim();
+    // SECURITY: Sanitize inputs — strip HTML tags & enforce max length
+    const name = sanitizeInput(userNameInput.value, 20);
+    const message = sanitizeInput(userMessageInput.value, 200);
 
     if (!name || !message) {
       showStatus("Please fill in both fields.", "error");
       return;
     }
+
+    // SECURITY: Rate limiting — prevent spam
+    const now = Date.now();
+    if (now - lastSubmitTime < SUBMIT_COOLDOWN_MS) {
+      const remaining = Math.ceil((SUBMIT_COOLDOWN_MS - (now - lastSubmitTime)) / 1000);
+      showStatus(`Please wait ${remaining}s before sending again.`, "error");
+      return;
+    }
+    lastSubmitTime = now;
 
     submitBtn.disabled = true;
     submitBtn.textContent = "SENDING...";
@@ -215,17 +294,23 @@ if (messageForm) {
       .push(newMsgData)
       .then(() => {
         messageForm.reset();
+        if (charCounter) {
+          charCounter.textContent = '0/200';
+          charCounter.style.color = 'rgba(255, 255, 255, 0.5)';
+          charCounter.style.fontWeight = 'normal';
+        }
         showStatus("Message sent!", "success");
         setTimeout(() => {
           submitBtn.disabled = false;
           submitBtn.textContent = "SEND MESSAGE";
-        }, 1000);
+        }, SUBMIT_COOLDOWN_MS);
       })
       .catch((error) => {
         console.error("Error setting data: ", error);
         showStatus("Failed to send message.", "error");
         submitBtn.disabled = false;
         submitBtn.textContent = "SEND MESSAGE";
+        lastSubmitTime = 0; // Reset cooldown on error
       });
   });
 
@@ -239,10 +324,21 @@ if (messageForm) {
     }, 3000);
   }
 
-  // EMOJI REACTIONS (Input Side)
+  // EMOJI REACTIONS (Input Side) — with whitelist + rate limit
+  let lastEmojiTime = 0;
+  const EMOJI_COOLDOWN_MS = 1000; // 1 second between emoji clicks
   document.querySelectorAll(".emoji-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      const emojiValue = e.target.getAttribute("data-emoji");
+      const emojiValue = e.currentTarget.getAttribute("data-emoji");
+
+      // SECURITY: Validate emoji against whitelist
+      if (!ALLOWED_EMOJIS.includes(emojiValue)) return;
+
+      // SECURITY: Rate limit emoji reactions
+      const now = Date.now();
+      if (now - lastEmojiTime < EMOJI_COOLDOWN_MS) return;
+      lastEmojiTime = now;
+
       reactionsRef.push({
         emoji: emojiValue,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -353,7 +449,8 @@ function hexToRgb(hex) {
 }
 
 const applyColorVar = (hex, prefix) => {
-  if (!hex) return;
+  // SECURITY: Validate hex color format before applying to CSS
+  if (!hex || !isValidHexColor(hex)) return;
   const rgb = hexToRgb(hex);
   if (rgb) {
     rootStyle.setProperty("--" + prefix + "-color", hex);
@@ -372,13 +469,23 @@ settingsRef.on("value", (snapshot) => {
   applyColorVar(data.bgColor, "bg");
   applyColorVar(data.fontColor, "text");
 
-  if (data.msgInterval) globalInterval = parseFloat(data.msgInterval);
+  if (data.msgInterval) {
+    // SECURITY: Clamp interval to valid range
+    const interval = parseFloat(data.msgInterval);
+    if (!isNaN(interval) && interval >= 0.5 && interval <= 10) {
+      globalInterval = interval;
+    }
+  }
 
   if (data.webTitle) {
-    document.title = data.webTitle;
-    document
-      .querySelectorAll(".custom-web-title")
-      .forEach((el) => (el.textContent = data.webTitle));
+    // SECURITY: Sanitize title — strip tags, limit length
+    const safeTitle = sanitizeInput(data.webTitle, 50);
+    if (safeTitle) {
+      document.title = safeTitle;
+      document
+        .querySelectorAll(".custom-web-title")
+        .forEach((el) => (el.textContent = safeTitle));
+    }
   }
 
   if (data.logoBase64) {
@@ -480,15 +587,47 @@ settingsRef.on("value", (snapshot) => {
 // ==========================================
 const loginBtn = document.getElementById("loginBtn");
 if (loginBtn) {
-  loginBtn.addEventListener("click", () => {
-    const pwd = document.getElementById("adminPassword").value;
-    if (pwd === "VOWS2026" || pwd === "vows2026") {
-      document.getElementById("loginGate").style.display = "none";
-      document.getElementById("adminPanel").style.display = "flex";
-    } else {
+  let loginAttempts = 0;
+  const MAX_LOGIN_ATTEMPTS = 5;
+
+  loginBtn.addEventListener("click", async () => {
+    // SECURITY: Brute-force protection
+    if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+      document.getElementById("loginError").textContent = 'Too many attempts. Refresh page.';
       document.getElementById("loginError").style.display = "block";
+      loginBtn.disabled = true;
+      return;
     }
+
+    const pwd = document.getElementById("adminPassword").value;
+    if (!pwd) return;
+
+    loginAttempts++;
+
+    // SECURITY: Compare hashed password instead of plaintext
+    const inputHash = await sha256(pwd);
+
+    // Check against Firebase-stored hash first, fallback to default
+    settingsRef.child('adminPasswordHash').once('value', (snapshot) => {
+      const storedHash = snapshot.val() || DEFAULT_ADMIN_HASH;
+      if (inputHash === storedHash) {
+        document.getElementById("loginGate").style.display = "none";
+        document.getElementById("adminPanel").style.display = "flex";
+        loginAttempts = 0; // Reset on success
+      } else {
+        document.getElementById("loginError").textContent = `Incorrect Password! (${MAX_LOGIN_ATTEMPTS - loginAttempts} attempts left)`;
+        document.getElementById("loginError").style.display = "block";
+      }
+    });
   });
+
+  // Allow Enter key to submit password
+  const adminPasswordInput = document.getElementById("adminPassword");
+  if (adminPasswordInput) {
+    adminPasswordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+  }
 }
 
 const clearChatBtn = document.getElementById("clearChatBtn");
@@ -627,15 +766,21 @@ if (activeSettingsForm) {
     saveSettingsBtn.disabled = true;
     saveSettingsBtn.textContent = "SAVING...";
 
+    // SECURITY: Validate all settings before writing to Firebase
+    const rawPrimary = document.getElementById("primaryColor").value;
+    const rawSecondary = document.getElementById("secondaryColor").value;
+    const rawBg = document.getElementById("bgColor").value;
+    const rawFont = document.getElementById("fontColor").value;
+    const rawInterval = parseFloat(document.getElementById("msgInterval").value);
+
     const updates = {
-      primaryColor: document.getElementById("primaryColor").value,
-      secondaryColor: document.getElementById("secondaryColor").value,
-      bgColor: document.getElementById("bgColor").value,
-      fontColor: document.getElementById("fontColor").value,
-      webTitle: document.getElementById("webTitle").value.trim(),
-      msgInterval:
-        parseFloat(document.getElementById("msgInterval").value) || 3,
-      profanityList: document.getElementById("profanityList").value,
+      primaryColor: isValidHexColor(rawPrimary) ? rawPrimary : '#ff0000',
+      secondaryColor: isValidHexColor(rawSecondary) ? rawSecondary : '#4a0000',
+      bgColor: isValidHexColor(rawBg) ? rawBg : '#000000',
+      fontColor: isValidHexColor(rawFont) ? rawFont : '#ffffff',
+      webTitle: sanitizeInput(document.getElementById("webTitle").value, 50),
+      msgInterval: (!isNaN(rawInterval) && rawInterval >= 0.5 && rawInterval <= 10) ? rawInterval : 3,
+      profanityList: sanitizeInput(document.getElementById("profanityList").value, 500),
     };
 
     const mainLogo = await getFileBase64("logoImage");
